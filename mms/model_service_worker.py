@@ -211,6 +211,18 @@ class MXNetModelServiceWorker(object):
             logging.info("Connection accepted: %s.", cl_socket.getsockname())
             p = multiprocessing.Process(target=self.start_worker, args=(cl_socket,))
             p.start()
+            
+            # cpuCount = os.cpu_count()
+            # logging.info("Nancy: cpu -- ", cpuCount)
+            # core_list = list(range(0, cpuCount))
+            core_list = list(os.sched_getaffinity(0))
+            random.shuffle(core_list)
+            affinity_mask = set(core_list[0:4])
+            os.sched_setaffinity(p.pid, affinity_mask)
+
+            logging.warning("LimitThreadsPatch: original affinity cores -- {}".format(str(core_list)))
+            logging.warning("LimitThreadsPatch: pid --  %s.", p.pid)
+            logging.warning("LimitThreadsPatch: mask affinity cores -- {}".format(str(affinity_mask)))
             cl_socket.close() # close accepted socket in the parent
 
 if __name__ == "__main__":
